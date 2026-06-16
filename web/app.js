@@ -32,8 +32,10 @@ let byteCount = 0;
 let lastEvent = null;
 let poseViz = null;
 let eventSource = null;
+let liveFallbackTried = false;
 
-const DEFAULT_AGENT_URL = "http://127.0.0.1:8765";
+const DEFAULT_AGENT_URL = "http://localhost:8765";
+const FALLBACK_AGENT_URL = "http://127.0.0.1:8765";
 
 function defaultAgentUrl() {
   const localHosts = new Set(["localhost", "127.0.0.1", "0.0.0.0", ""]);
@@ -55,15 +57,45 @@ function agentUrl(path) {
   return `${agentBaseUrl()}${path}`;
 }
 
+function alternateAgentBaseUrl() {
+  const current = agentBaseUrl();
+  if (current === DEFAULT_AGENT_URL) {
+    return FALLBACK_AGENT_URL;
+  }
+  if (current === FALLBACK_AGENT_URL) {
+    return DEFAULT_AGENT_URL;
+  }
+  return "";
+}
+
 function setAgentError(message) {
   agentError.textContent = message || "";
 }
 
 async function agentFetch(path, options = {}) {
+  try {
+    return await fetchFromAgent(agentBaseUrl(), path, options);
+  } catch (error) {
+    const alternate = alternateAgentBaseUrl();
+    if (!alternate) {
+      throw error;
+    }
+    try {
+      const response = await fetchFromAgent(alternate, path, options);
+      setAgentBaseUrl(alternate);
+      agentUrlInput.value = alternate;
+      return response;
+    } catch {
+      throw error;
+    }
+  }
+}
+
+async function fetchFromAgent(baseUrl, path, options = {}) {
   const controller = new AbortController();
   const timer = window.setTimeout(() => controller.abort(), 2500);
   try {
-    const response = await fetch(agentUrl(path), {
+    const response = await fetch(`${baseUrl}${path}`, {
       ...options,
       signal: controller.signal,
     });
@@ -400,6 +432,7 @@ function connect() {
   }
   eventSource = new EventSource(agentUrl("/events"));
   eventSource.onopen = () => {
+    liveFallbackTried = false;
     setAgentError("");
     setState("live", "Live");
   };
@@ -407,6 +440,13 @@ function connect() {
   eventSource.onerror = () => {
     setAgentError("Live stream disconnected. If this is GitHub Pages, try Open local UI.");
     setState("error", "Agent disconnected");
+    const alternate = alternateAgentBaseUrl();
+    if (alternate && !liveFallbackTried) {
+      liveFallbackTried = true;
+      setAgentBaseUrl(alternate);
+      agentUrlInput.value = alternate;
+      window.setTimeout(connect, 700);
+    }
   };
 }
 

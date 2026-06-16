@@ -8,7 +8,7 @@ The web UI is static and can be hosted on GitHub Pages. A small local agent runs
 Telemetry source / Captury
   -> UDP host-ip:port
 Local Agent
-  -> http://127.0.0.1:8765
+  -> http://localhost:8765
 GitHub Pages or local browser UI
 ```
 
@@ -53,13 +53,13 @@ The browser can change the UDP listen host/port. Changes are saved back to `agen
 Local fallback UI:
 
 ```text
-http://127.0.0.1:8765
+http://localhost:8765
 ```
 
 GitHub Pages UI uses the same `web/` files and connects to:
 
 ```text
-http://127.0.0.1:8765
+http://localhost:8765
 ```
 
 If needed, change the Local Agent URL in the UI.
