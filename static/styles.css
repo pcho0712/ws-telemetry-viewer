@@ -1,0 +1,323 @@
+:root {
+  color-scheme: dark;
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  background: #111313;
+  color: #e8ece9;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: #111313;
+}
+
+.shell {
+  display: grid;
+  grid-template-rows: auto auto auto auto auto 1fr;
+  gap: 14px;
+  min-height: 100vh;
+  padding: 18px;
+}
+
+.topbar,
+.metrics,
+.toolbar,
+.settings,
+.network {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+h1,
+p {
+  margin: 0;
+}
+
+h1 {
+  font-size: 24px;
+  font-weight: 700;
+}
+
+p,
+.label,
+.status,
+.toolbar,
+.target-list {
+  color: #aab4ad;
+  font-size: 14px;
+}
+
+.status {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  white-space: nowrap;
+}
+
+.dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #d99a38;
+}
+
+.dot.live {
+  background: #5fd18a;
+}
+
+.dot.error {
+  background: #e05f5f;
+}
+
+.metrics,
+.network {
+  justify-content: flex-start;
+  flex-wrap: wrap;
+}
+
+.metrics > div,
+.network > div {
+  min-width: 160px;
+  padding: 12px 0;
+  border-top: 1px solid #2d3330;
+  border-bottom: 1px solid #2d3330;
+}
+
+.network .targets {
+  flex: 1 1 320px;
+}
+
+.target-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.target-pill {
+  padding: 5px 8px;
+  border: 1px solid #3a433e;
+  border-radius: 6px;
+  background: #171b19;
+  color: #f4f7f5;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+}
+
+.label {
+  display: block;
+  margin-bottom: 4px;
+}
+
+strong {
+  display: block;
+  overflow-wrap: anywhere;
+  color: #ffffff;
+  font-size: 18px;
+}
+
+.toolbar,
+.settings {
+  justify-content: flex-end;
+}
+
+.settings {
+  justify-content: flex-start;
+  flex-wrap: wrap;
+  padding: 12px 0;
+  border-top: 1px solid #2d3330;
+  border-bottom: 1px solid #2d3330;
+}
+
+.settings label {
+  align-items: flex-start;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.settings label span {
+  color: #aab4ad;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+input[type="text"],
+input[type="number"],
+select {
+  width: 180px;
+  min-height: 34px;
+  padding: 0 10px;
+  border: 1px solid #3a433e;
+  border-radius: 6px;
+  background: #090a0a;
+  color: #f4f7f5;
+  font: inherit;
+}
+
+select {
+  width: 110px;
+}
+
+.current {
+  min-width: 220px;
+}
+
+button {
+  min-height: 34px;
+  padding: 0 14px;
+  border: 1px solid #3a433e;
+  border-radius: 6px;
+  background: #1b201d;
+  color: #f4f7f5;
+  font: inherit;
+  cursor: pointer;
+}
+
+button:hover {
+  background: #232a26;
+}
+
+label {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.dump {
+  min-height: 0;
+  border: 1px solid #2d3330;
+  background: #090a0a;
+}
+
+pre,
+.json-panel {
+  height: 100%;
+  min-height: 360px;
+  margin: 0;
+  overflow: auto;
+  padding: 14px;
+  color: #dce8df;
+  font: 13px/1.45 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.json-panel {
+  border: 1px solid #2d3330;
+  background: #090a0a;
+}
+
+.json-panel {
+  display: grid;
+  grid-template-columns: minmax(320px, 42%) minmax(320px, 1fr);
+  gap: 0;
+  padding: 0;
+}
+
+.hidden {
+  display: none;
+}
+
+.pose-panel {
+  display: grid;
+  grid-template-rows: auto 1fr;
+  min-height: 360px;
+  border-right: 1px solid #2d3330;
+}
+
+.pose-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px;
+  border-bottom: 1px solid #1d2220;
+}
+
+.pose-head strong {
+  font-size: 14px;
+}
+
+.pose-viewport {
+  min-height: 300px;
+}
+
+.pose-viewport canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.json-table-wrap {
+  min-height: 360px;
+  overflow: auto;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font: 13px/1.45 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+}
+
+th,
+td {
+  padding: 8px 10px;
+  border-bottom: 1px solid #1d2220;
+  text-align: left;
+  vertical-align: top;
+}
+
+th {
+  position: sticky;
+  top: 0;
+  background: #111313;
+  color: #aab4ad;
+}
+
+td:first-child {
+  width: 42%;
+  color: #94d2a2;
+}
+
+td:last-child {
+  color: #f4f7f5;
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 640px) {
+  .shell {
+    padding: 14px;
+  }
+
+  .topbar,
+  .toolbar,
+  .settings {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .toolbar {
+    align-items: stretch;
+  }
+
+  input[type="text"],
+  input[type="number"],
+  select,
+  .settings button {
+    width: 100%;
+  }
+
+  .json-panel {
+    grid-template-columns: 1fr;
+  }
+
+  .pose-panel {
+    border-right: 0;
+    border-bottom: 1px solid #2d3330;
+  }
+}

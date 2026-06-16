@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>UDP Listener</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <main class="shell">
+      <section class="topbar" aria-label="UDP listener status">
+        <div>
+          <h1>UDP Listener</h1>
+          <p>Realtime UDP text dump.</p>
+        </div>
+        <div class="status">
+          <span id="stateDot" class="dot idle"></span>
+          <span id="stateText">Connecting</span>
+        </div>
+      </section>
+
+      <section class="settings" aria-label="UDP bind settings">
+        <label>
+          <span>Listen IP</span>
+          <input id="hostInput" type="text" value="0.0.0.0" spellcheck="false" />
+        </label>
+        <label>
+          <span>UDP Port</span>
+          <input id="portInput" type="number" min="1" max="65535" value="8888" />
+        </label>
+        <button id="applyButton" type="button">Apply</button>
+        <div class="current">
+          <span class="label">Current bind</span>
+          <strong id="currentBind">-</strong>
+        </div>
+      </section>
+
+      <section class="network" aria-label="Network addresses">
+        <div>
+          <span class="label">This host</span>
+          <strong id="hostName">-</strong>
+        </div>
+        <div>
+          <span class="label">Likely LAN IP</span>
+          <strong id="primaryIp">-</strong>
+        </div>
+        <div class="targets">
+          <span class="label">Send UDP to</span>
+          <div id="targetList" class="target-list">-</div>
+        </div>
+      </section>
+
+      <section class="metrics" aria-label="Message summary">
+        <div>
+          <span class="label">Messages</span>
+          <strong id="count">0</strong>
+        </div>
+        <div>
+          <span class="label">Bytes</span>
+          <strong id="bytes">0</strong>
+        </div>
+        <div>
+          <span class="label">Last source</span>
+          <strong id="source">-</strong>
+        </div>
+      </section>
+
+      <section class="toolbar" aria-label="Dump controls">
+        <label>
+          Format
+          <select id="formatSelect">
+            <option value="raw">Raw</option>
+            <option value="json">JSON</option>
+          </select>
+        </label>
+        <label>
+          <input id="recordAll" type="checkbox" />
+          Record all
+        </label>
+        <button id="clearButton" type="button">Clear</button>
+        <button id="copyButton" type="button">Copy Dump</button>
+        <label>
+          <input id="autoscroll" type="checkbox" checked />
+          Autoscroll
+        </label>
+      </section>
+
+      <section class="dump" aria-label="Realtime UDP dump">
+        <pre id="log" aria-live="polite"></pre>
+      </section>
+
+      <section id="jsonPanel" class="json-panel hidden" aria-label="Latest JSON values">
+        <div class="pose-panel">
+          <div class="pose-head">
+            <div>
+              <span class="label">Captury 3D</span>
+              <strong id="poseStatus">Waiting for pose JSON</strong>
+            </div>
+            <label>
+              <input id="poseRotate" type="checkbox" checked />
+              Rotate
+            </label>
+          </div>
+          <div id="poseViewport" class="pose-viewport"></div>
+        </div>
+        <div class="json-table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Path</th>
+                <th>Value</th>
+              </tr>
+            </thead>
+            <tbody id="jsonTableBody"></tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+    <script type="module" src="/app.js"></script>
+  </body>
+</html>
