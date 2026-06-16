@@ -2,9 +2,6 @@ import * as THREE from "./vendor/three.module.js";
 
 const stateDot = document.querySelector("#stateDot");
 const stateText = document.querySelector("#stateText");
-const agentUrlInput = document.querySelector("#agentUrlInput");
-const agentApplyButton = document.querySelector("#agentApplyButton");
-const agentError = document.querySelector("#agentError");
 const log = document.querySelector("#log");
 const count = document.querySelector("#count");
 const bytes = document.querySelector("#bytes");
@@ -32,81 +29,24 @@ let byteCount = 0;
 let lastEvent = null;
 let poseViz = null;
 let eventSource = null;
-let liveFallbackTried = false;
-
-const DEFAULT_AGENT_URL = "http://localhost:8765";
-const FALLBACK_AGENT_URL = "http://127.0.0.1:8765";
-
-function defaultAgentUrl() {
-  const localHosts = new Set(["localhost", "127.0.0.1", "0.0.0.0", ""]);
-  if (localHosts.has(window.location.hostname)) {
-    return window.location.origin;
-  }
-  return DEFAULT_AGENT_URL;
-}
-
-function agentBaseUrl() {
-  return (localStorage.getItem("telemetryViewer.agentUrl") || defaultAgentUrl()).replace(/\/+$/, "");
-}
-
-function setAgentBaseUrl(url) {
-  localStorage.setItem("telemetryViewer.agentUrl", url.replace(/\/+$/, ""));
-}
 
 function agentUrl(path) {
-  return `${agentBaseUrl()}${path}`;
-}
-
-function alternateAgentBaseUrl() {
-  const current = agentBaseUrl();
-  if (current === DEFAULT_AGENT_URL) {
-    return FALLBACK_AGENT_URL;
-  }
-  if (current === FALLBACK_AGENT_URL) {
-    return DEFAULT_AGENT_URL;
-  }
-  return "";
-}
-
-function setAgentError(message) {
-  agentError.textContent = message || "";
+  return path;
 }
 
 async function agentFetch(path, options = {}) {
-  try {
-    return await fetchFromAgent(agentBaseUrl(), path, options);
-  } catch (error) {
-    const alternate = alternateAgentBaseUrl();
-    if (!alternate) {
-      throw error;
-    }
-    try {
-      const response = await fetchFromAgent(alternate, path, options);
-      setAgentBaseUrl(alternate);
-      agentUrlInput.value = alternate;
-      return response;
-    } catch {
-      throw error;
-    }
-  }
-}
-
-async function fetchFromAgent(baseUrl, path, options = {}) {
   const controller = new AbortController();
   const timer = window.setTimeout(() => controller.abort(), 2500);
   try {
-    const response = await fetch(`${baseUrl}${path}`, {
+    const response = await fetch(agentUrl(path), {
       ...options,
       signal: controller.signal,
     });
     if (!response.ok) {
       throw new Error(`HTTP ${response.status}`);
     }
-    setAgentError("");
     return response;
   } catch (error) {
-    const reason = error.name === "AbortError" ? "timeout" : error.message;
-    setAgentError(`Agent request failed: ${reason}`);
     setState("error", "Agent unreachable");
     throw error;
   } finally {
@@ -432,21 +372,11 @@ function connect() {
   }
   eventSource = new EventSource(agentUrl("/events"));
   eventSource.onopen = () => {
-    liveFallbackTried = false;
-    setAgentError("");
     setState("live", "Live");
   };
   eventSource.onmessage = (message) => appendEvent(JSON.parse(message.data));
   eventSource.onerror = () => {
-    setAgentError("Live stream disconnected. If this is GitHub Pages, try Open local UI.");
     setState("error", "Agent disconnected");
-    const alternate = alternateAgentBaseUrl();
-    if (alternate && !liveFallbackTried) {
-      liveFallbackTried = true;
-      setAgentBaseUrl(alternate);
-      agentUrlInput.value = alternate;
-      window.setTimeout(connect, 700);
-    }
   };
 }
 
@@ -467,17 +397,8 @@ copyButton.addEventListener("click", async () => {
 applyButton.addEventListener("click", applyConfig);
 recordAll.addEventListener("change", updateRecording);
 formatSelect.addEventListener("change", renderLatestJson);
-agentApplyButton.addEventListener("click", () => {
-  setAgentBaseUrl(agentUrlInput.value || DEFAULT_AGENT_URL);
-  connect();
-  loadConfig();
-  loadNetwork();
-  loadRecording();
-  loadRecent();
-});
 
 poseViz = initPoseVisualizer();
-agentUrlInput.value = agentBaseUrl();
 
 Promise.all([loadConfig(), loadNetwork(), loadRecording(), loadRecent()])
   .catch(() => undefined)
