@@ -8,7 +8,7 @@ Run one local process per host. The process receives UDP telemetry, serves the b
 Telemetry source / Captury
   -> UDP host-ip:port
 Local Telemetry Viewer
-  -> http://localhost:8765
+  -> http://127.0.0.1:8765
 ```
 
 ## Layout
@@ -33,7 +33,7 @@ python3 agent/server.py
 Open:
 
 ```text
-http://localhost:8765
+http://127.0.0.1:8765
 ```
 
 Defaults are stored in `agent/config.json`:

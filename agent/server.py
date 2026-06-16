@@ -32,6 +32,8 @@ RECENT_LIMIT = 200
 DUMP_LOCK = threading.Lock()
 RECORD_ALL = False
 RECORDING_LOCK = threading.Lock()
+PACKET_COUNT = 0
+PACKET_COUNT_LOCK = threading.Lock()
 
 
 class UdpService:
@@ -98,19 +100,27 @@ class UdpService:
                 except OSError:
                     break
                 event = event_payload(data, addr)
-                preview = event["text"].replace("\n", "\\n")
-                if len(preview) > 160:
-                    preview = f"{preview[:160]}..."
-                print(
-                    f"[{event['time']}] {event['source']} {event['bytes']}B {preview}",
-                    flush=True,
-                )
+                log_packet_summary(event)
                 publish(event)
 
             sock.close()
 
 
 UDP_SERVICE: UdpService | None = None
+
+
+def log_packet_summary(event: dict[str, Any]) -> None:
+    global PACKET_COUNT
+
+    with PACKET_COUNT_LOCK:
+        PACKET_COUNT += 1
+        count = PACKET_COUNT
+
+    if count == 1 or count % 100 == 0:
+        print(
+            f"[{event['time']}] received {count} packets, latest {event['source']} {event['bytes']}B",
+            flush=True,
+        )
 
 
 def load_config() -> dict[str, Any]:
@@ -228,7 +238,7 @@ class Handler(SimpleHTTPRequestHandler):
         super().__init__(*args, directory=str(WEB_ROOT), **kwargs)
 
     def log_message(self, format: str, *args: Any) -> None:
-        print(f"HTTP {self.address_string()} - {format % args}", flush=True)
+        return
 
     def do_GET(self) -> None:
         if self.path == "/events":
