@@ -1,4 +1,8 @@
 {
+  "name": "network-ingress-viz",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Local network ingress inspector and browser visualizer for UDP/WS-style telemetry.",
   "dependencies": {
     "three": "^0.184.0"
   }

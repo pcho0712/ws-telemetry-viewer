@@ -1,8 +1,12 @@
-# UDP Listener
+# Network Ingress Viz
 
-Small local web tool that listens for UDP datagrams and dumps received text in realtime.
+Browser-based arrival check and visualization tool for network telemetry entering a local machine.
+
+The current local agent listens for UDP datagrams and exposes them to the browser in realtime.
 The browser UI can show and change the UDP listen IP/port, show LAN send-target addresses, clear/copy the dump, autoscroll incoming text, and switch between raw and JSON views.
 When JSON mode receives Captury pose data, the latest `joints.*.position` frame is rendered as a simple 3D skeleton.
+
+The project direction is to keep the browser UI portable, including GitHub Pages hosting, while each host runs a small local agent for UDP/WS ingress.
 
 ## Run
 
@@ -32,7 +36,7 @@ From another terminal:
 printf 'hello udp\n' | nc -u -w1 127.0.0.1 8888
 ```
 
-The same datagram is printed in the server terminal and pushed to the browser.
+The same datagram is printed as a short server-terminal summary and pushed to the browser.
 
 ## Options
 
