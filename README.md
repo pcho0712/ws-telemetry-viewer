@@ -68,4 +68,5 @@ From another LAN host, send to the `Send UDP to` address shown in the UI.
 - Browser-only pages cannot listen for UDP directly, so this app intentionally runs locally.
 - Windows hosts may need a Windows Defender Firewall rule allowing inbound UDP on the configured port.
 - The default UI follows only the latest packet. Enable `Record all` only when you want a running session log.
-- JSON mode parses the latest payload and renders Captury `joints.*.position` data as a simple 3D skeleton.
+- `View: JSON` parses the latest payload and shows a `path / value` table.
+- `View: 3D` renders Captury `joints.*.position` data as a simple 3D skeleton.

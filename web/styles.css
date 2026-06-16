@@ -125,7 +125,6 @@ strong {
   justify-content: flex-end;
 }
 
-.settings,
 .settings {
   justify-content: flex-start;
   flex-wrap: wrap;
@@ -218,6 +217,22 @@ pre,
   grid-template-columns: minmax(320px, 42%) minmax(320px, 1fr);
   gap: 0;
   padding: 0;
+}
+
+.json-panel.pose-only {
+  grid-template-columns: 1fr;
+}
+
+.json-panel.pose-only .pose-panel {
+  border-right: 0;
+}
+
+.json-panel.pose-only .pose-viewport {
+  min-height: 560px;
+}
+
+.json-panel.pose-only .json-table-wrap {
+  display: none;
 }
 
 .hidden {

@@ -330,13 +330,15 @@ function flattenJson(value, path = "$", rows = []) {
 }
 
 function renderLatestJson() {
-  const jsonMode = formatSelect.value === "json";
-  jsonPanel.classList.toggle("hidden", !jsonMode);
-  document.querySelector(".dump").classList.toggle("hidden", jsonMode);
-  if (jsonMode && poseViz) {
+  const viewMode = formatSelect.value;
+  const structuredMode = viewMode === "json" || viewMode === "3d";
+  jsonPanel.classList.toggle("hidden", !structuredMode);
+  jsonPanel.classList.toggle("pose-only", viewMode === "3d");
+  document.querySelector(".dump").classList.toggle("hidden", structuredMode);
+  if (structuredMode && poseViz) {
     window.setTimeout(poseViz.resize, 0);
   }
-  if (!jsonMode) {
+  if (!structuredMode) {
     return;
   }
 
@@ -357,6 +359,9 @@ function renderLatestJson() {
   }
 
   poseViz.update(parsed);
+  if (viewMode === "3d") {
+    return;
+  }
 
   const rows = flattenJson(parsed);
   for (const [path, value] of rows) {
