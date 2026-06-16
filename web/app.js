@@ -4,6 +4,7 @@ const stateDot = document.querySelector("#stateDot");
 const stateText = document.querySelector("#stateText");
 const agentUrlInput = document.querySelector("#agentUrlInput");
 const agentApplyButton = document.querySelector("#agentApplyButton");
+const agentError = document.querySelector("#agentError");
 const log = document.querySelector("#log");
 const count = document.querySelector("#count");
 const bytes = document.querySelector("#bytes");
@@ -52,6 +53,33 @@ function setAgentBaseUrl(url) {
 
 function agentUrl(path) {
   return `${agentBaseUrl()}${path}`;
+}
+
+function setAgentError(message) {
+  agentError.textContent = message || "";
+}
+
+async function agentFetch(path, options = {}) {
+  const controller = new AbortController();
+  const timer = window.setTimeout(() => controller.abort(), 2500);
+  try {
+    const response = await fetch(agentUrl(path), {
+      ...options,
+      signal: controller.signal,
+    });
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}`);
+    }
+    setAgentError("");
+    return response;
+  } catch (error) {
+    const reason = error.name === "AbortError" ? "timeout" : error.message;
+    setAgentError(`Agent request failed: ${reason}`);
+    setState("error", "Agent unreachable");
+    throw error;
+  } finally {
+    window.clearTimeout(timer);
+  }
 }
 
 const CAPTURY_BONES = [
@@ -246,7 +274,7 @@ function appendEvent(event) {
 }
 
 async function loadRecent() {
-  const response = await fetch(agentUrl("/api/recent"));
+  const response = await agentFetch("/api/recent");
   const events = await response.json();
   for (const event of events) {
     appendEvent(event);
@@ -254,18 +282,18 @@ async function loadRecent() {
 }
 
 async function loadConfig() {
-  const response = await fetch(agentUrl("/api/config"));
+  const response = await agentFetch("/api/config");
   renderConfig(await response.json());
 }
 
 async function loadRecording() {
-  const response = await fetch(agentUrl("/api/recording"));
+  const response = await agentFetch("/api/recording");
   const state = await response.json();
   recordAll.checked = Boolean(state.recordAll);
 }
 
 async function updateRecording() {
-  await fetch(agentUrl("/api/recording"), {
+  await agentFetch("/api/recording", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ recordAll: recordAll.checked }),
@@ -277,14 +305,14 @@ async function updateRecording() {
 }
 
 async function loadNetwork() {
-  const response = await fetch(agentUrl("/api/network"));
+  const response = await agentFetch("/api/network");
   renderNetwork(await response.json());
 }
 
 async function applyConfig() {
   applyButton.disabled = true;
   try {
-    const response = await fetch(agentUrl("/api/config"), {
+    const response = await agentFetch("/api/config", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -371,9 +399,15 @@ function connect() {
     eventSource.close();
   }
   eventSource = new EventSource(agentUrl("/events"));
-  eventSource.onopen = () => setState("live", "Live");
+  eventSource.onopen = () => {
+    setAgentError("");
+    setState("live", "Live");
+  };
   eventSource.onmessage = (message) => appendEvent(JSON.parse(message.data));
-  eventSource.onerror = () => setState("error", "Agent disconnected");
+  eventSource.onerror = () => {
+    setAgentError("Live stream disconnected. If this is GitHub Pages, try Open local UI.");
+    setState("error", "Agent disconnected");
+  };
 }
 
 clearButton.addEventListener("click", () => {
@@ -383,7 +417,7 @@ clearButton.addEventListener("click", () => {
   bytes.textContent = "0";
   source.textContent = "-";
   log.textContent = "";
-  fetch(agentUrl("/api/clear"), { method: "POST" }).catch(() => undefined);
+  agentFetch("/api/clear", { method: "POST" }).catch(() => undefined);
 });
 
 copyButton.addEventListener("click", async () => {

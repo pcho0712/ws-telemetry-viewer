@@ -181,6 +181,20 @@ select {
   width: min(520px, calc(100vw - 36px));
 }
 
+.agent-link {
+  color: #94d2a2;
+  text-decoration: none;
+}
+
+.agent-link:hover {
+  text-decoration: underline;
+}
+
+.agent-error {
+  color: #e7a86b;
+  font-size: 13px;
+}
+
 button {
   min-height: 34px;
   padding: 0 14px;
