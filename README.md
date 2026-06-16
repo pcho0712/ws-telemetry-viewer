@@ -1,45 +1,94 @@
-# Network Ingress Viz
+# Telemetry Viewer
 
-Browser-based arrival check and visualization tool for network telemetry entering a local machine.
+Browser telemetry arrival checker and visualizer.
 
-The current local agent listens for UDP datagrams and exposes them to the browser in realtime.
-The browser UI can show and change the UDP listen IP/port, show LAN send-target addresses, clear/copy the dump, autoscroll incoming text, and switch between raw and JSON views.
-When JSON mode receives Captury pose data, the latest `joints.*.position` frame is rendered as a simple 3D skeleton.
-
-The project direction is to keep the browser UI portable, including GitHub Pages hosting, while each host runs a small local agent for UDP/WS ingress.
-
-## Run
-
-```bash
-python3 server.py
-```
-
-Open:
+The web UI is static and can be hosted on GitHub Pages. A small local agent runs on each host that needs to receive UDP telemetry, then exposes localhost HTTP/SSE APIs for the browser UI.
 
 ```text
-http://127.0.0.1:8080
+Telemetry source / Captury
+  -> UDP host-ip:port
+Local Agent
+  -> http://127.0.0.1:8765
+GitHub Pages or local browser UI
 ```
 
-Startup defaults:
+## Layout
 
-- UDP bind: `0.0.0.0:8888`
-- Web UI: `127.0.0.1:8080`
+```text
+agent/
+  server.py       Local UDP receiver and browser API
+  config.json     Persistent agent settings
+web/
+  index.html      GitHub Pages UI
+  app.js
+  styles.css
+  vendor/
+```
 
-The UDP bind address and port can also be changed from the browser while the server is running.
-By default the UI follows only the latest received packet. Enable `Record all` when you explicitly want a running session log.
+## Run Local Agent
 
-## Send a test packet
+```bash
+python3 agent/server.py
+```
 
-From another terminal:
+Defaults are stored in `agent/config.json`:
+
+```json
+{
+  "udp": {
+    "host": "0.0.0.0",
+    "port": 8888
+  },
+  "http": {
+    "host": "127.0.0.1",
+    "port": 8765
+  }
+}
+```
+
+The browser can change the UDP listen host/port. Changes are saved back to `agent/config.json` and applied immediately by rebinding the UDP socket.
+
+## Open UI
+
+Local fallback UI:
+
+```text
+http://127.0.0.1:8765
+```
+
+GitHub Pages UI uses the same `web/` files and connects to:
+
+```text
+http://127.0.0.1:8765
+```
+
+If needed, change the Local Agent URL in the UI.
+
+## Send Test UDP
+
+From the same host:
 
 ```bash
 printf 'hello udp\n' | nc -u -w1 127.0.0.1 8888
 ```
 
-The same datagram is printed as a short server-terminal summary and pushed to the browser.
+From another LAN host, send to the `Send UDP to` address shown in the UI.
 
-## Options
+## GitHub Pages
 
-```bash
-python3 server.py --udp-host 0.0.0.0 --udp-port 8888 --http-host 127.0.0.1 --http-port 8080
-```
+This repository includes a GitHub Actions workflow that deploys `web/` to GitHub Pages.
+
+Repository setup:
+
+1. Push this repo to GitHub.
+2. In GitHub, open `Settings -> Pages`.
+3. Set `Build and deployment` source to `GitHub Actions`.
+4. Push to `main`.
+
+## Notes
+
+- Browser-only pages cannot listen for UDP directly.
+- UDP receive is handled by the local agent.
+- Windows hosts may need a Windows Defender Firewall rule allowing inbound UDP on the configured port.
+- The default UI follows only the latest packet. Enable `Record all` only when you want a running session log.
+- JSON mode parses the latest payload and renders Captury `joints.*.position` data as a simple 3D skeleton.

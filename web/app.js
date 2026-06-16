@@ -1,7 +1,9 @@
-import * as THREE from "/vendor/three.module.js";
+import * as THREE from "./vendor/three.module.js";
 
 const stateDot = document.querySelector("#stateDot");
 const stateText = document.querySelector("#stateText");
+const agentUrlInput = document.querySelector("#agentUrlInput");
+const agentApplyButton = document.querySelector("#agentApplyButton");
 const log = document.querySelector("#log");
 const count = document.querySelector("#count");
 const bytes = document.querySelector("#bytes");
@@ -28,6 +30,29 @@ let messageCount = 0;
 let byteCount = 0;
 let lastEvent = null;
 let poseViz = null;
+let eventSource = null;
+
+const DEFAULT_AGENT_URL = "http://127.0.0.1:8765";
+
+function defaultAgentUrl() {
+  const localHosts = new Set(["localhost", "127.0.0.1", "0.0.0.0", ""]);
+  if (localHosts.has(window.location.hostname)) {
+    return window.location.origin;
+  }
+  return DEFAULT_AGENT_URL;
+}
+
+function agentBaseUrl() {
+  return (localStorage.getItem("telemetryViewer.agentUrl") || defaultAgentUrl()).replace(/\/+$/, "");
+}
+
+function setAgentBaseUrl(url) {
+  localStorage.setItem("telemetryViewer.agentUrl", url.replace(/\/+$/, ""));
+}
+
+function agentUrl(path) {
+  return `${agentBaseUrl()}${path}`;
+}
 
 const CAPTURY_BONES = [
   ["left_hip", "left_knee"],
@@ -221,7 +246,7 @@ function appendEvent(event) {
 }
 
 async function loadRecent() {
-  const response = await fetch("/api/recent");
+  const response = await fetch(agentUrl("/api/recent"));
   const events = await response.json();
   for (const event of events) {
     appendEvent(event);
@@ -229,18 +254,18 @@ async function loadRecent() {
 }
 
 async function loadConfig() {
-  const response = await fetch("/api/config");
+  const response = await fetch(agentUrl("/api/config"));
   renderConfig(await response.json());
 }
 
 async function loadRecording() {
-  const response = await fetch("/api/recording");
+  const response = await fetch(agentUrl("/api/recording"));
   const state = await response.json();
   recordAll.checked = Boolean(state.recordAll);
 }
 
 async function updateRecording() {
-  await fetch("/api/recording", {
+  await fetch(agentUrl("/api/recording"), {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ recordAll: recordAll.checked }),
@@ -252,14 +277,14 @@ async function updateRecording() {
 }
 
 async function loadNetwork() {
-  const response = await fetch("/api/network");
+  const response = await fetch(agentUrl("/api/network"));
   renderNetwork(await response.json());
 }
 
 async function applyConfig() {
   applyButton.disabled = true;
   try {
-    const response = await fetch("/api/config", {
+    const response = await fetch(agentUrl("/api/config"), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -342,10 +367,13 @@ function renderLatestJson() {
 }
 
 function connect() {
-  const events = new EventSource("/events");
-  events.onopen = () => setState("live", "Live");
-  events.onmessage = (message) => appendEvent(JSON.parse(message.data));
-  events.onerror = () => setState("error", "Reconnecting");
+  if (eventSource) {
+    eventSource.close();
+  }
+  eventSource = new EventSource(agentUrl("/events"));
+  eventSource.onopen = () => setState("live", "Live");
+  eventSource.onmessage = (message) => appendEvent(JSON.parse(message.data));
+  eventSource.onerror = () => setState("error", "Agent disconnected");
 }
 
 clearButton.addEventListener("click", () => {
@@ -355,7 +383,7 @@ clearButton.addEventListener("click", () => {
   bytes.textContent = "0";
   source.textContent = "-";
   log.textContent = "";
-  fetch("/api/clear", { method: "POST" }).catch(() => undefined);
+  fetch(agentUrl("/api/clear"), { method: "POST" }).catch(() => undefined);
 });
 
 copyButton.addEventListener("click", async () => {
@@ -365,8 +393,17 @@ copyButton.addEventListener("click", async () => {
 applyButton.addEventListener("click", applyConfig);
 recordAll.addEventListener("change", updateRecording);
 formatSelect.addEventListener("change", renderLatestJson);
+agentApplyButton.addEventListener("click", () => {
+  setAgentBaseUrl(agentUrlInput.value || DEFAULT_AGENT_URL);
+  connect();
+  loadConfig();
+  loadNetwork();
+  loadRecording();
+  loadRecent();
+});
 
 poseViz = initPoseVisualizer();
+agentUrlInput.value = agentBaseUrl();
 
 Promise.all([loadConfig(), loadNetwork(), loadRecording(), loadRecent()])
   .catch(() => undefined)

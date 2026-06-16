@@ -12,7 +12,19 @@ from pathlib import Path
 from typing import Any
 
 
-ROOT = Path(__file__).resolve().parent
+ROOT = Path(__file__).resolve().parents[1]
+WEB_ROOT = ROOT / "web"
+CONFIG_PATH = Path(__file__).resolve().parent / "config.json"
+DEFAULT_CONFIG = {
+    "udp": {
+        "host": "0.0.0.0",
+        "port": 8888,
+    },
+    "http": {
+        "host": "127.0.0.1",
+        "port": 8765,
+    },
+}
 CLIENTS: set[queue.Queue[dict[str, Any]]] = set()
 CLIENTS_LOCK = threading.Lock()
 RECENT: list[dict[str, Any]] = []
@@ -99,6 +111,27 @@ class UdpService:
 
 
 UDP_SERVICE: UdpService | None = None
+
+
+def load_config() -> dict[str, Any]:
+    config = json.loads(json.dumps(DEFAULT_CONFIG))
+    if CONFIG_PATH.exists():
+        with CONFIG_PATH.open("r", encoding="utf-8") as file:
+            loaded = json.load(file)
+        for section, values in loaded.items():
+            if isinstance(values, dict) and isinstance(config.get(section), dict):
+                config[section].update(values)
+    return config
+
+
+def save_config(config: dict[str, Any]) -> None:
+    CONFIG_PATH.write_text(json.dumps(config, indent=2) + "\n", encoding="utf-8")
+
+
+def update_config_file(section: str, values: dict[str, Any]) -> None:
+    config = load_config()
+    config.setdefault(section, {}).update(values)
+    save_config(config)
 
 
 def local_ipv4_addresses() -> list[str]:
@@ -192,7 +225,7 @@ def publish(event: dict[str, Any]) -> None:
 
 class Handler(SimpleHTTPRequestHandler):
     def __init__(self, *args: Any, **kwargs: Any) -> None:
-        super().__init__(*args, directory=str(ROOT / "static"), **kwargs)
+        super().__init__(*args, directory=str(WEB_ROOT), **kwargs)
 
     def log_message(self, format: str, *args: Any) -> None:
         print(f"HTTP {self.address_string()} - {format % args}", flush=True)
@@ -216,6 +249,10 @@ class Handler(SimpleHTTPRequestHandler):
             self.send_json(recording_state())
             return
         super().do_GET()
+
+    def do_OPTIONS(self) -> None:
+        self.send_response(HTTPStatus.NO_CONTENT)
+        self.end_headers()
 
     def do_POST(self) -> None:
         if self.path == "/api/config":
@@ -256,6 +293,7 @@ class Handler(SimpleHTTPRequestHandler):
             self.send_json({"error": str(exc)}, HTTPStatus.BAD_REQUEST)
             return
 
+        update_config_file("udp", {"host": host, "port": port})
         self.send_json(UDP_SERVICE.update(host, port))
 
     def update_recording(self) -> None:
@@ -274,6 +312,16 @@ class Handler(SimpleHTTPRequestHandler):
             if not enabled and len(RECENT) > 1:
                 RECENT[:] = RECENT[-1:]
         self.send_json(recording_state())
+
+    def end_headers(self) -> None:
+        self.send_cors_headers()
+        super().end_headers()
+
+    def send_cors_headers(self) -> None:
+        self.send_header("Access-Control-Allow-Origin", "*")
+        self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+        self.send_header("Access-Control-Allow-Headers", "Content-Type")
+        self.send_header("Access-Control-Allow-Private-Network", "true")
 
     def send_json(self, payload: Any, status: HTTPStatus = HTTPStatus.OK) -> None:
         body = json.dumps(payload).encode("utf-8")
@@ -315,19 +363,27 @@ class Handler(SimpleHTTPRequestHandler):
 def main() -> None:
     global UDP_SERVICE
 
-    parser = argparse.ArgumentParser(description="UDP text listener with realtime web dump.")
-    parser.add_argument("--udp-host", default="0.0.0.0")
-    parser.add_argument("--udp-port", type=int, default=8888)
-    parser.add_argument("--http-host", default="127.0.0.1")
-    parser.add_argument("--http-port", type=int, default=8080)
+    parser = argparse.ArgumentParser(description="Telemetry Viewer local agent.")
+    config = load_config()
+
+    parser.add_argument("--udp-host", default=None)
+    parser.add_argument("--udp-port", type=int, default=None)
+    parser.add_argument("--http-host", default=None)
+    parser.add_argument("--http-port", type=int, default=None)
     args = parser.parse_args()
 
-    UDP_SERVICE = UdpService(args.udp_host, args.udp_port)
+    udp_host = args.udp_host or config["udp"]["host"]
+    udp_port = args.udp_port or int(config["udp"]["port"])
+    http_host = args.http_host or config["http"]["host"]
+    http_port = args.http_port or int(config["http"]["port"])
+
+    UDP_SERVICE = UdpService(udp_host, udp_port)
     thread = threading.Thread(target=UDP_SERVICE.run, daemon=True)
     thread.start()
 
-    server = ThreadingHTTPServer((args.http_host, args.http_port), Handler)
-    print(f"Web UI on http://{args.http_host}:{args.http_port}", flush=True)
+    server = ThreadingHTTPServer((http_host, http_port), Handler)
+    print(f"Local agent on http://{http_host}:{http_port}", flush=True)
+    print(f"Local fallback UI on http://{http_host}:{http_port}", flush=True)
     try:
         server.serve_forever()
     except KeyboardInterrupt:

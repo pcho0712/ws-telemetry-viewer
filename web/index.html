@@ -3,20 +3,28 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>UDP Listener</title>
-    <link rel="stylesheet" href="/styles.css" />
+    <title>Telemetry Viewer</title>
+    <link rel="stylesheet" href="./styles.css" />
   </head>
   <body>
     <main class="shell">
       <section class="topbar" aria-label="UDP listener status">
         <div>
-          <h1>UDP Listener</h1>
-          <p>Realtime UDP text dump.</p>
+          <h1>Telemetry Viewer</h1>
+          <p>Realtime telemetry arrival check and visualization.</p>
         </div>
         <div class="status">
           <span id="stateDot" class="dot idle"></span>
           <span id="stateText">Connecting</span>
         </div>
+      </section>
+
+      <section class="agent" aria-label="Local agent connection">
+        <label>
+          <span>Local Agent</span>
+          <input id="agentUrlInput" type="text" value="http://127.0.0.1:8765" spellcheck="false" />
+        </label>
+        <button id="agentApplyButton" type="button">Connect</button>
       </section>
 
       <section class="settings" aria-label="UDP bind settings">
@@ -116,6 +124,6 @@
         </div>
       </section>
     </main>
-    <script type="module" src="/app.js"></script>
+    <script type="module" src="./app.js"></script>
   </body>
 </html>

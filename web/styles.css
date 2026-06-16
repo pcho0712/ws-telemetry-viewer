@@ -27,7 +27,8 @@ body {
 .metrics,
 .toolbar,
 .settings,
-.network {
+.network,
+.agent {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -121,11 +122,13 @@ strong {
 }
 
 .toolbar,
-.settings {
+.settings,
+.agent {
   justify-content: flex-end;
 }
 
-.settings {
+.settings,
+.agent {
   justify-content: flex-start;
   flex-wrap: wrap;
   padding: 12px 0;
@@ -133,13 +136,15 @@ strong {
   border-bottom: 1px solid #2d3330;
 }
 
-.settings label {
+.settings label,
+.agent label {
   align-items: flex-start;
   flex-direction: column;
   gap: 6px;
 }
 
-.settings label span {
+.settings label span,
+.agent label span {
   color: #aab4ad;
   font-size: 12px;
   font-weight: 600;
@@ -165,6 +170,15 @@ select {
 
 .current {
   min-width: 220px;
+}
+
+.agent {
+  justify-content: flex-start;
+  flex-wrap: wrap;
+}
+
+.agent input {
+  width: min(520px, calc(100vw - 36px));
 }
 
 button {
@@ -296,7 +310,8 @@ td:last-child {
 
   .topbar,
   .toolbar,
-  .settings {
+  .settings,
+  .agent {
     align-items: flex-start;
     flex-direction: column;
   }
@@ -308,7 +323,8 @@ td:last-child {
   input[type="text"],
   input[type="number"],
   select,
-  .settings button {
+  .settings button,
+  .agent button {
     width: 100%;
   }
 
